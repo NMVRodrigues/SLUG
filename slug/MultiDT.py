@@ -1,6 +1,7 @@
 from .Population import Population
 from sklearn.tree import DecisionTreeClassifier
 import random
+import pandas as pd
 
 # By using this file, you are agreeing to this product's EULA
 #
@@ -57,7 +58,7 @@ class MultiDT:
 		num_features = Tr_X.shape[1]
 		self.best = None
 		self.best_fitness = -1
-		self.best_tree_features = []
+		self.best_features = []
 		for i in range(self.population_size):
 			num_features_tree = random.randint(2, num_features)
 			possible_features = [x for x in range(num_features)]
@@ -73,12 +74,12 @@ class MultiDT:
 				fitness = tree.score(Te_X, Te_Y)
 			else:
 				fitness = tree.score(tree_data, Tr_Y)
-			if fitness > self.best_fitness or (fitness == self.best_fitness and len(features_tree) < len(self.best_tree_features)):
+			if fitness > self.best_fitness or (fitness == self.best_fitness and len(features_tree) < len(self.best_features)):
 				self.best = tree
 				self.best_fitness = fitness 
-				self.best_tree_features = tree_data.columns
-				#print(f"New best tree, fitness {self.best_fitness}, num_features {len(self.best_tree_features)}")
-
+				self.best_features = tree_data.columns
+				#print(f"New best tree, fitness {self.best_fitness}, num_features {len(self.best_features)}")
+		
 
 	def predict(self, dataset):
 		'''
@@ -86,7 +87,7 @@ class MultiDT:
 		'''
 		self.checkIfTrained()
 
-		return self.getBestIndividual().predict(dataset.loc[:, self.best_tree_features])
+		return self.getBestIndividual().predict(dataset.loc[:, self.best_features])
 
 	def getBestIndividual(self):
 		'''
@@ -95,6 +96,18 @@ class MultiDT:
 		self.checkIfTrained()
 
 		return self.best
+
+	def getUsedFeaturesFromBestIndividual(self):
+		"""Filters used features from all features consume by the best individual.
+		Returns list used features.
+		"""
+		print(f"features - {len(self.best_features)}")
+		used_features = []
+		for feature, importance in zip(self.best_features, self.best.feature_importances_):
+			if importance > 0:
+				used_features.append(feature)
+		print(f"used_features - {len(used_features)}")
+		return used_features
 
 	def getAccuracyOverTime(self):
 		'''

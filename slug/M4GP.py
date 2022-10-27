@@ -1,4 +1,4 @@
-from ellyn import ellyn
+#from ellyn import ellyn
 from sklearn.metrics import accuracy_score
 
 

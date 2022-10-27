@@ -170,14 +170,9 @@ class Population_GA:
 			[ ind.fit(self.Tr_x, self.Tr_y, self.Te_x, self.Te_y) for ind in self.population]
 			[ ind.getFitness() for ind in self.population ]
 
-		fit = []
-		for ind in self.population:
-			fit.append(ind.fitness)
-		#print(min(fit), max(fit)) # *** J: as DT parece estagnar bem depressa na accuracy maxima da geracao mas a minima vai subido hmmm
-
-
 		# Sort the population from best to worse
 		self.population.sort(reverse=True)
+		#print(self.population[-1].fitness, self.population[0].fitness)   # *** J: as DT parece estagnar bem depressa na accuracy maxima da geracao mas a minima vai subido hmmm
 
 
 		# Update best individual
@@ -186,17 +181,31 @@ class Population_GA:
 
 		# Generating Next Generation
 		newPopulation = []
+
+
 		#newPopulation.extend(getElite(self.population, self.elitism_size))
 		while len(newPopulation) < self.population_size:
 			offspring = GAoffspring(self.population)
 			newPopulation.extend(offspring)
 		self.population = newPopulation[:self.population_size]
 
+		# Creating new individual with best features form last generation
+		features = self.bestIndividual.model.getUsedFeaturesFromBestIndividual()
+		probs = []
+		for column in self.terminals:
+			if column in features:
+				probs.append(1)
+			else:
+				probs.append(0)
+		ind = Individual_GA(probs, self.GP_params, self.metrics, self.classifier)
+		ind.create()
+		self.population.append(ind)
+
 
 		end = time.time()
 
 		# Debug
-		if self.verbose and self.currentGeneration%5==0:
+		if self.verbose:
 			if self.classifier == 'GP':
 				if not self.Te_x is None:
 					print("> Gen #"+str(self.currentGeneration)+":   Tr-Acc: "+ "%.6f" %self.bestIndividual.model.getBestIndividual().getAccuracy(self.Tr_x, self.Tr_y)+" // Te-Acc: "+ "%.6f" %self.bestIndividual.model.getBestIndividual().getAccuracy(self.Te_x, self.Te_y) +
